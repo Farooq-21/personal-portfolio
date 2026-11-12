@@ -35,13 +35,33 @@ export function Contact() {
     e.preventDefault()
     setFormStatus('loading')
 
-    // Simulate form submission
-    // Replace with actual form submission logic (Resend, Formspree, etc.)
-    setTimeout(() => {
-      setFormStatus('success')
-      setFormData({ name: '', email: '', message: '' })
-      setTimeout(() => setFormStatus('idle'), 3000)
-    }, 1500)
+    try {
+      const res = await fetch('https://formspree.io/f/xqpqadae', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify({
+          name:    formData.name,
+          email:   formData.email,
+          message: formData.message,
+        }),
+      })
+
+      if (res.ok) {
+        setFormStatus('success')
+        setFormData({ name: '', email: '', message: '' })
+        // Reset back to idle after 5 s so the user can send another message
+        setTimeout(() => setFormStatus('idle'), 5000)
+      } else {
+        setFormStatus('error')
+        setTimeout(() => setFormStatus('idle'), 4000)
+      }
+    } catch {
+      setFormStatus('error')
+      setTimeout(() => setFormStatus('idle'), 4000)
+    }
   }
 
   const contactInfo = [
@@ -223,40 +243,61 @@ export function Contact() {
                     variant="primary"
                     size="lg"
                     className="w-full"
-                    disabled={formStatus === 'loading'}
+                    disabled={formStatus === 'loading' || formStatus === 'success'}
                   >
                     {formStatus === 'loading' ? (
-                      'Sending...'
+                      <span className="flex items-center gap-2">
+                        <svg
+                          className="animate-spin w-4 h-4"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          aria-hidden="true"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12" cy="12" r="10"
+                            stroke="currentColor" strokeWidth="4"
+                          />
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                          />
+                        </svg>
+                        Sending…
+                      </span>
                     ) : formStatus === 'success' ? (
-                      <>
+                      <span className="flex items-center gap-2">
                         <Check className="w-5 h-5" />
-                        Sent!
-                      </>
+                        Message Sent!
+                      </span>
                     ) : (
-                      <>
+                      <span className="flex items-center gap-2">
                         <Send className="w-5 h-5" />
                         Send Message
-                      </>
+                      </span>
                     )}
                   </Button>
 
                   {formStatus === 'success' && (
                     <motion.p
-                      initial={{ opacity: 0, y: -10 }}
+                      initial={{ opacity: 0, y: -8 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="text-secondary text-center text-sm"
+                      className="text-center text-sm font-medium"
+                      style={{ color: '#19c37d' }}
                     >
-                      Thank you! I&apos;ll get back to you soon.
+                      ✓ Thank you! I&apos;ll get back to you soon.
                     </motion.p>
                   )}
 
                   {formStatus === 'error' && (
                     <motion.p
-                      initial={{ opacity: 0, y: -10 }}
+                      initial={{ opacity: 0, y: -8 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="text-red-500 text-center text-sm"
+                      className="text-center text-sm font-medium text-red-400"
                     >
-                      Something went wrong. Please try again.
+                      ✗ Something went wrong. Please try again or email me directly.
                     </motion.p>
                   )}
                 </form>
